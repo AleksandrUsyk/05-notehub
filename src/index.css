@@ -1,20 +1,14 @@
-@import "modern-normalize/modern-normalize.css";
+/* src/index.css */
+@import "modern-normalize";
 
 :root {
-  --fg: #ffffff;
-  --muted: #a7a7a7;
-}
-
-html,
-body,
-#root {
-  height: 100%;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
-    "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: #f6f7fb;
+  color: #111;
 }

@@ -1,69 +1,74 @@
-import { useState } from "react";
-import ReactPaginate from "react-paginate";
-import { Toaster, toast } from "react-hot-toast";
-import SearchBar from "../SearchBar/SearchBar";
-import MovieGrid from "../MovieGrid/MovieGrid";
-import Loader from "../Loader/Loader";
-import ErrorMessage from "../ErrorMessage/ErrorMessage";
-import MovieModal from "../MovieModal/MovieModal";
-import { useFetchMovies } from "../../services/movieService";
-import type { Movie } from "../../types/movie";
+// src/components/App/App.tsx
+import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
+import SearchBox from "../SearchBox/SearchBox";
+import NoteList from "../NoteList/NoteList";
+import Pagination from "../Pagination/Pagination";
+import Modal from "../Modal/Modal";
+import NoteForm from "../NoteForm/NoteForm";
+import { fetchNotesApi } from "../../services/noteService";
+import { useDebouncedValue } from "../../utils/useDebouncedValue";
 import css from "./App.module.css";
 
 export default function App() {
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Movie | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [search, setSearch] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = useFetchMovies(query, page);
+  // debounce search term (300ms)
+  const debouncedSearch = useDebouncedValue(search, 300);
 
-  const handleSearch = (searchQuery: string) => {
-    const trimmedQuery = searchQuery.trim();
-    if (!trimmedQuery) {
-      toast("Please enter your search query.");
-      return;
-    }
-    setQuery(trimmedQuery);
-    setPage(1);
-  };
-
-  const handlePageChange = ({ selected }: { selected: number }) => {
-    setPage(selected + 1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  // useQuery in NoteList (we will fetch in NoteList component) — but we can also centralize.
+  // Here, NoteList will receive page and debouncedSearch and internally use useQuery.
+  const onCreated = async () => {
+    // invalidate notes cache: refetch current list (page+search)
+    await queryClient.invalidateQueries(["notes"]);
   };
 
   return (
-    <>
-      <SearchBar onSubmit={handleSearch} />
-      <main className={css.app}>
-        {isLoading && <Loader />}
-        {isError && <ErrorMessage />}
-        {!isLoading && !isError && data && (
-          <>
-            {data.total_pages > 1 && (
-              <ReactPaginate
-                pageCount={data.total_pages}
-                pageRangeDisplayed={5}
-                marginPagesDisplayed={1}
-                onPageChange={handlePageChange}
-                forcePage={page - 1}
-                containerClassName={css.pagination}
-                activeClassName={css.active}
-                previousLabel="←"
-                nextLabel="→"
-                previousClassName={css.prevArrow}
-                nextClassName={css.nextArrow}
-              />
-            )}
+    <div className={css.app}>
+      <header className={css.toolbar}>
+        <SearchBox value={search} onChange={setSearch} />
+        <button
+          className={css.button}
+          onClick={() => {
+            setIsModalOpen(true);
+          }}
+        >
+          Create note +
+        </button>
+      </header>
 
-            <MovieGrid movies={data.results} onSelect={setSelected} />
-          </>
-        )}
-      </main>
-      {selected && (
-        <MovieModal movie={selected} onClose={() => setSelected(null)} />
+      <NoteList
+        page={page}
+        perPage={12}
+        search={debouncedSearch}
+        onPageChange={setPage}
+      />
+
+      {/* Pagination handled inside NoteList or separate component below - we show below too */}
+      <Pagination
+        page={page}
+        setPage={setPage}
+        perPage={12}
+        search={debouncedSearch}
+      />
+
+      {isModalOpen && (
+        <Modal onClose={() => setIsModalOpen(false)}>
+          <NoteForm
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={async () => {
+              await onCreated();
+              setIsModalOpen(false);
+            }}
+          />
+        </Modal>
       )}
+
       <Toaster position="top-right" />
-    </>
+    </div>
   );
 }
