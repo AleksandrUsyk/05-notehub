@@ -1,8 +1,7 @@
-// src/types/note.ts
 export type NoteTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
 
 export interface Note {
-  _id: string;
+  id: string;
   title: string;
   content: string;
   tag: NoteTag;
@@ -11,6 +10,9 @@ export interface Note {
 }
 
 export interface FetchNotesResponse {
-  notes: Note[]; // raw response field name from backend may vary — adjust if API uses another key
-  totalPages: number; // number of pages
+  data: Note[];
+  page: number;
+  perPage: number;
+  total: number;
+  totalPages: number;
 }
