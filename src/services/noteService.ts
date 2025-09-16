@@ -1,5 +1,6 @@
 import axios from "axios";
-import type { Note, FetchNotesResponse } from "../types/note";
+import type { Note } from "../types/note";
+import type { FetchNotesResponse } from "../types/api";
 
 const API_BASE_URL = "https://notehub-public.goit.study/api";
 
@@ -17,52 +18,17 @@ export interface FetchNotesParams {
   search?: string;
 }
 
-interface RawNote {
-  _id?: string;
-  id?: string;
-  title: string;
-  content: string;
-  tag: Note["tag"];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface RawFetchResponse {
-  notes?: RawNote[];
-  data?: RawNote[];
-  page?: number;
-  perPage?: number;
-  total?: number;
-  totalPages?: number;
-}
-
 export async function fetchNotes({
   page = 1,
   perPage = 12,
   search = "",
 }: FetchNotesParams): Promise<FetchNotesResponse> {
-  const { data } = await api.get<RawFetchResponse>("/notes", {
+  const { data } = await api.get<FetchNotesResponse>("/notes", {
     params: { page, perPage, search },
   });
 
-  const rawNotes: RawNote[] = data.notes ?? data.data ?? [];
-
-  const notes: Note[] = rawNotes.map((n) => ({
-    id: n._id ?? n.id ?? "",
-    title: n.title,
-    content: n.content,
-    tag: n.tag,
-    createdAt: n.createdAt,
-    updatedAt: n.updatedAt,
-  }));
-
-  return {
-    data: notes,
-    page: data.page ?? page,
-    perPage: data.perPage ?? perPage,
-    total: data.total ?? notes.length,
-    totalPages: data.totalPages ?? 1,
-  };
+  // предполагаем, что backend отдаёт структуру, совместимую с FetchNotesResponse
+  return data;
 }
 
 export async function createNoteApi(payload: {
@@ -70,19 +36,11 @@ export async function createNoteApi(payload: {
   content?: string;
   tag: Note["tag"];
 }): Promise<Note> {
-  const { data } = await api.post<RawNote>("/notes", payload);
-
-  return {
-    id: data._id ?? data.id ?? "",
-    title: data.title,
-    content: data.content,
-    tag: data.tag,
-    createdAt: data.createdAt,
-    updatedAt: data.updatedAt,
-  };
+  const { data } = await api.post<Note>("/notes", payload);
+  return data;
 }
 
-export async function deleteNoteApi(id: string): Promise<{ message?: string }> {
-  const { data } = await api.delete<{ message?: string }>(`/notes/${id}`);
+export async function deleteNoteApi(id: string): Promise<Note> {
+  const { data } = await api.delete<Note>(`/notes/${id}`);
   return data;
 }
