@@ -8,19 +8,17 @@ import css from "./NoteForm.module.css";
 
 interface NoteFormProps {
   onClose: () => void;
-  onSuccess: () => Promise<void>;
 }
 
 const NoteSchema = Yup.object().shape({
   title: Yup.string().min(3, "Min 3").max(50, "Max 50").required("Required"),
   content: Yup.string().max(500, "Max 500"),
-  tag: Yup.mixed<NoteTag>().oneOf(
-    ["Todo", "Work", "Personal", "Meeting", "Shopping"],
-    "Invalid tag"
-  ),
+  tag: Yup.mixed<NoteTag>()
+    .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"], "Invalid tag")
+    .required("Tag is required"),
 });
 
-export default function NoteForm({ onClose, onSuccess }: NoteFormProps) {
+export default function NoteForm({ onClose }: NoteFormProps) {
   const queryClient = useQueryClient();
   const submitRef = useRef<HTMLButtonElement | null>(null);
 
@@ -29,7 +27,7 @@ export default function NoteForm({ onClose, onSuccess }: NoteFormProps) {
       createNoteApi(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      await onSuccess();
+      onClose();
     },
   });
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import SearchBox from "../SearchBox/SearchBox";
 import NoteList from "../NoteList/NoteList";
@@ -15,7 +15,6 @@ export default function App() {
   const [search, setSearch] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const queryClient = useQueryClient();
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
@@ -31,20 +30,18 @@ export default function App() {
   const notes = data?.notes ?? [];
   const totalPages = data?.totalPages ?? 0;
 
-  const handleNoteCreated = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["notes"] });
-  };
-
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
         <SearchBox value={search} onChange={setSearch} />
 
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-        />
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        )}
 
         <button className={css.button} onClick={() => setIsModalOpen(true)}>
           Create note +
@@ -54,18 +51,15 @@ export default function App() {
       <main>
         {isLoading && <p>Loading notes...</p>}
         {isError && <p>Error loading notes.</p>}
-        {!isLoading && !isError && <NoteList notes={notes} />}
+        {!isLoading && !isError && notes.length > 0 && (
+          <NoteList notes={notes} />
+        )}
+        {!isLoading && !isError && notes.length === 0 && <p>No notes found.</p>}
       </main>
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
-          <NoteForm
-            onClose={() => setIsModalOpen(false)}
-            onSuccess={async () => {
-              await handleNoteCreated();
-              setIsModalOpen(false);
-            }}
-          />
+          <NoteForm onClose={() => setIsModalOpen(false)} />
         </Modal>
       )}
 
