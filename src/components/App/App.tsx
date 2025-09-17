@@ -18,7 +18,6 @@ export default function App() {
   const queryClient = useQueryClient();
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  // Скидаємо сторінку на 1 при зміні пошукового запиту
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch]);
@@ -26,12 +25,10 @@ export default function App() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["notes", debouncedSearch, page],
     queryFn: () => fetchNotes({ page, perPage: 12, search: debouncedSearch }),
-    staleTime: 1000 * 60, // 1 хв
-    // keepPreviousData більше не потрібно
-    // placeholderData можна використовувати, якщо хочемо "заглушку"
+    staleTime: 1000 * 60,
   });
 
-  const notes = data?.data ?? [];
+  const notes = data?.notes ?? [];
   const totalPages = data?.totalPages ?? 0;
 
   const handleNoteCreated = async () => {

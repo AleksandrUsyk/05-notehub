@@ -27,7 +27,6 @@ export async function fetchNotes({
     params: { page, perPage, search },
   });
 
-  // предполагаем, что backend отдаёт структуру, совместимую с FetchNotesResponse
   return data;
 }
 

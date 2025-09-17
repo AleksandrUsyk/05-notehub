@@ -43,7 +43,6 @@ export default function NoteForm({ onClose, onSuccess }: NoteFormProps) {
           setSubmitting(true);
           try {
             await mutation.mutateAsync(values);
-            // onSuccess handles cache invalidation + closing
           } catch (err) {
             console.error(err);
             alert("Failed to create note");
